@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/beevik/ntp"
 	"log"
 	"time"
+
+	"github.com/beevik/ntp"
 )
 
-const TimeSourceUrl = "0.beevik-ntp.pool.ntp.org"
+const TimeSourceURL = "0.beevik-ntp.pool.ntp.org"
 
 func main() {
-	ntpTime, err := ntp.Time(TimeSourceUrl)
+	ntpTime, err := ntp.Time(TimeSourceURL)
 
 	if err != nil {
 		log.Fatalf("ntp error: %s", err.Error())
