@@ -16,10 +16,6 @@ func main() {
 		log.Fatalf("ntp error: %s", err.Error())
 	}
 
-	fmt.Printf("current time: %s\n", formatTime(time.Now()))
-	fmt.Printf("exact time: %s\n", formatTime(ntpTime))
-}
-
-func formatTime(t time.Time) string {
-	return t.Format("2006-01-02 15:04:05 +0000 UTC")
+	fmt.Printf("current time: %s\n", time.Now().Round(0))
+	fmt.Printf("exact time: %s\n", ntpTime.Round(0))
 }
