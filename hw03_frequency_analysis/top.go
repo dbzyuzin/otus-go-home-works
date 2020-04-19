@@ -5,6 +5,7 @@ import (
 )
 
 func Top10(inp string) []string {
+	const need = 10
 	words := strings.Fields(inp)
 
 	frequency := make(map[string]int)
@@ -16,12 +17,13 @@ func Top10(inp string) []string {
 	for word := range frequency {
 		words = append(words, word)
 	}
-	if len(words) <= 10 {
+	if len(words) <= need {
 		return words
 	}
 
 	sort.Slice(words, func(i, j int) bool {
 		return frequency[words[i]] > frequency[words[j]]
 	})
-	return words[:10]
+
+	return words[:need]
 }
