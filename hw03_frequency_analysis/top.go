@@ -10,7 +10,11 @@ func Top10(inp string) []string {
 
 	frequency := make(map[string]int)
 	for _, word := range words {
-		frequency[word]++
+		word = strings.Trim(word, "!,.\"-")
+		word = strings.ToLower(word)
+		if word != "" {
+			frequency[word]++
+		}
 	}
 
 	words = words[:0]
