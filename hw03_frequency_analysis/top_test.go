@@ -4,6 +4,8 @@ import (
 	"testing"
 	"unicode"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,18 +62,18 @@ func TestTop10(t *testing.T) {
 	})
 
 	t.Run("no words and any spaces string", func(t *testing.T) {
-		assert.Len(t, Top10("   "), 0)
+		require.Len(t, Top10("   "), 0)
 	})
 
 	t.Run("any simbols that not words", func(t *testing.T) {
-		assert.Len(t, Top10(" ! ,\"  "), 0)
+		require.Len(t, Top10(" ! ,\"  "), 0)
 	})
 
 	t.Run("all words is lower", func(t *testing.T) {
 		for _, word := range Top10(" Cлово сЛово2 слоВо3 словО4") {
 			for _, char := range []rune(word) {
 				if unicode.IsLetter(char) {
-					assert.True(t, unicode.IsLower(char), "simbols is not lower")
+					require.True(t, unicode.IsLower(char), "simbols is not lower")
 				}
 			}
 		}
