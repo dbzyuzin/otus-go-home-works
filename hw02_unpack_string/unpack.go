@@ -2,6 +2,7 @@ package hw02_unpack_string //nolint:golint,stylecheck
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -13,8 +14,7 @@ var ErrInvalidString = errors.New("invalid string")
 func Unpack(inp string) (string, error) {
 	inputReader := strings.NewReader(inp)
 
-	res, err := UnpackFromReader(inputReader)
-	return res, err
+	return UnpackFromReader(inputReader)
 }
 
 func UnpackFromReader(inputReader *strings.Reader) (string, error) {
@@ -38,7 +38,11 @@ func UnpackFromReader(inputReader *strings.Reader) (string, error) {
 			count, _ := strconv.Atoi(string(next))
 			result.WriteString(strings.Repeat(string(current), count))
 		} else {
-			_ = inputReader.UnreadRune()
+			err = inputReader.UnreadRune()
+			if err != nil {
+				return "", fmt.Errorf("unread rune error: %w", err)
+			}
+
 			result.WriteRune(current)
 		}
 	}
