@@ -1,4 +1,5 @@
 package hw04_lru_cache //nolint:golint,stylecheck
+import "sync"
 
 type Key string
 
@@ -9,9 +10,10 @@ type Cache interface {
 }
 
 type lruCache struct {
-	cap      int                // - capacity
-	queue    List               // - queue
-	cacheMap map[Key]*cacheItem // - items
+	mux      sync.RWMutex         // - mutex
+	cap      int                  // - capacity
+	queue    List                 // - queue
+	cacheMap map[string]*listItem // - items
 }
 
 type cacheItem struct {
@@ -19,18 +21,56 @@ type cacheItem struct {
 	value interface{}
 }
 
-func (l lruCache) Set(key string, value interface{}) bool {
-	panic("implement me")
+func (l *lruCache) Set(key string, value interface{}) bool {
+	l.mux.Lock()
+	defer l.mux.Unlock()
+	lstItem, ok := l.cacheMap[key]
+	if ok {
+		lstItem.Value = cacheItem{
+			key:   key,
+			value: value,
+		}
+		l.queue.MoveToFront(lstItem)
+	} else {
+		lstItem = l.queue.PushFront(cacheItem{
+			key:   key,
+			value: value,
+		})
+		l.cacheMap[key] = lstItem
+
+		if l.queue.Len() > l.cap {
+			l.queue.Remove(l.queue.Back())
+			delete(l.cacheMap, key)
+		}
+	}
+	return ok
 }
 
-func (l lruCache) Get(key string) (interface{}, bool) {
-	panic("implement me")
+func (l *lruCache) Get(key string) (interface{}, bool) {
+	l.mux.RLock()
+	lstItem, ok := l.cacheMap[key]
+	l.mux.RLock()
+	if ok {
+		l.mux.Lock()
+		defer l.mux.Unlock()
+		l.queue.MoveToFront(lstItem)
+		cache := lstItem.Value.(cacheItem)
+		return cache.value, true
+	}
+	return nil, false
 }
 
-func (l lruCache) Clear() {
-	panic("implement me")
+func (l *lruCache) Clear() {
+	l.mux.Lock()
+	defer l.mux.Unlock()
+	l.queue = NewList()
+	l.cacheMap = make(map[string]*listItem, l.cap)
 }
 
 func NewCache(capacity int) Cache {
-	return &lruCache{}
+	return &lruCache{
+		cap:      capacity,
+		queue:    NewList(),
+		cacheMap: make(map[string]*listItem, capacity),
+	}
 }
