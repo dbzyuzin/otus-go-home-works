@@ -17,7 +17,7 @@ func Top10(inp string) []string {
 		}
 	}
 
-	words = words[:0]
+	words = make([]string, len(frequency))
 	for word := range frequency {
 		words = append(words, word)
 	}
