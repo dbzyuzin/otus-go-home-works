@@ -49,7 +49,7 @@ func (l *lruCache) Set(key string, value interface{}) bool {
 func (l *lruCache) Get(key string) (interface{}, bool) {
 	l.mux.RLock()
 	lstItem, ok := l.cacheMap[key]
-	l.mux.RLock()
+	l.mux.RUnlock()
 	if ok {
 		l.mux.Lock()
 		defer l.mux.Unlock()
