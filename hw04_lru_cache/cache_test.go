@@ -50,8 +50,42 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
-		t.Skip()
-		// Write me
+		cache := NewCache(2)
+
+		for _, i := range []int{1, 2, 3, 4} {
+			cache.Set(strconv.Itoa(i), i)
+		} // ["4", "3"]
+
+		_, ok := cache.Get("3") // ["3", "4"]
+		require.True(t, ok)
+
+		_, ok = cache.Get("2")
+		require.False(t, ok)
+
+		_, ok = cache.Get("1")
+		require.False(t, ok)
+
+		cache.Set("newkey", 1000) // ["newkey", "3"]
+		_, ok = cache.Get("4")
+		require.False(t, ok)
+		_, ok = cache.Get("3")
+		require.True(t, ok)
+		_, ok = cache.Get("newkey")
+		require.True(t, ok)
+	})
+
+	t.Run("clear", func(t *testing.T) {
+		cache := NewCache(2)
+
+		for _, i := range []int{1, 2} {
+			cache.Set(strconv.Itoa(i), i)
+		}
+
+		cache.Clear()
+		_, ok := cache.Get("1")
+		require.False(t, ok)
+		_, ok = cache.Get("2")
+		require.False(t, ok)
 	})
 }
 

@@ -39,8 +39,9 @@ func (l *lruCache) Set(key string, value interface{}) bool {
 		l.cacheMap[key] = lstItem
 
 		if l.queue.Len() > l.cap {
-			l.queue.Remove(l.queue.Back())
-			delete(l.cacheMap, key)
+			back := l.queue.Back()
+			l.queue.Remove(back)
+			delete(l.cacheMap, back.Value.(cacheItem).key)
 		}
 	}
 	return ok

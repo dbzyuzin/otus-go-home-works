@@ -86,4 +86,13 @@ func TestList(t *testing.T) {
 			require.Equal(t, seq[i], elems[i])
 		}
 	})
+
+	t.Run("Для покрытие проверка на пуш в конец в пустой лист", func(t *testing.T) {
+		l := NewList()
+
+		l.PushBack(2)
+
+		require.Equal(t, 1, l.Len())
+		require.Equal(t, l.Front(), l.Back())
+	})
 }
