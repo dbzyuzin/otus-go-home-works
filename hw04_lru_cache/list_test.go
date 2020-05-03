@@ -48,4 +48,42 @@ func TestList(t *testing.T) {
 		}
 		require.Equal(t, []int{50, 30, 10, 40, 60, 80, 70}, elems)
 	})
+
+	t.Run("nil на границах", func(t *testing.T) {
+		l := NewList()
+
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Back())
+
+		l.PushFront(1)
+
+		require.NotNil(t, l.Front())
+		require.Equal(t, l.Back(), l.Front())
+
+		l.PushFront(2)
+		l.Remove(l.Front())
+		l.Remove(l.Front())
+
+		require.Equal(t, 0, l.Len())
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Front())
+	})
+
+	t.Run("Проверка последовательности", func(t *testing.T) {
+		l := NewList()
+
+		seq := []int{1, 2, 3, 4}
+		for _, elem := range seq {
+			l.PushFront(elem)
+		}
+
+		elems := make([]int, 0, l.Len())
+		for i := l.Back(); i != nil; i = i.Next {
+			elems = append(elems, i.Value.(int))
+		}
+
+		for i := range seq {
+			require.Equal(t, seq[i], elems[i])
+		}
+	})
 }
