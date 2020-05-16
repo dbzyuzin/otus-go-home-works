@@ -25,17 +25,21 @@ func Run(tasks []Task, N int, M int) error {
 	}
 
 	errCounter := 0
+	doneCounter := 0
 	for {
+		if doneCounter >= len(tasks) {
+			close(quit)
+			break
+		}
 		if <-results != nil {
 			errCounter++
 		}
+		doneCounter++
 		if errCounter >= M {
-			close(tasksChan)
+			close(quit)
 			return ErrErrorsLimitExceeded
-		} else {
-			if tnum >= len(tasks) {
-				break
-			}
+		}
+		if tnum < len(tasks) {
 			tasksChan <- tasks[tnum]
 			tnum++
 		}
