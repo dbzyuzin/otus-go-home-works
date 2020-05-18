@@ -2,6 +2,7 @@ package hw05_parallel_execution //nolint:golint,stylecheck
 
 import (
 	"errors"
+	"sync"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
@@ -10,72 +11,64 @@ type Task func() error
 
 // Run starts tasks in N goroutines and stops its work when receiving M errors from tasks
 func Run(tasks []Task, N int, M int) error {
-	results := make(chan error, 1)
-	tasksChan := make(chan Task, N)
-	quit := make(chan struct{})
-
-	var tnum int
-	for tnum = 0; tnum < N && tnum < len(tasks); tnum++ {
-		tasksChan <- tasks[tnum]
+	if len(tasks) < N {
+		N = len(tasks)
 	}
-	//go pushTasks(tasks, tasksChan, quit)
+	tasksChan := make(chan Task, 1)
+	results := make(chan error)
+	done := make(chan struct{})
 
+	workersWg := &sync.WaitGroup{}
+
+	workersWg.Add(N)
 	for i := 0; i < N; i++ {
-		go worker(tasksChan, results, quit)
+		go worker(tasksChan, results, done, workersWg)
 	}
 
-	errCounter := 0
-	doneCounter := 0
-	for {
-		if doneCounter >= len(tasks) {
-			close(quit)
-			break
+	errCount := 0
+	checkRes := func(res error) error {
+		if res != nil {
+			errCount++
 		}
-		if <-results != nil {
-			errCounter++
-		}
-		doneCounter++
-		if errCounter >= M {
-			close(quit)
+		if errCount >= M {
+			close(done)
+			workersWg.Wait()
 			return ErrErrorsLimitExceeded
 		}
-		if tnum < len(tasks) {
-			tasksChan <- tasks[tnum]
-			tnum++
-		}
+		return nil
 	}
 
+	for i := 0; i < len(tasks); {
+		select {
+		case tasksChan <- tasks[i]:
+			i++
+		case res := <-results:
+			res = checkRes(res)
+			if res != nil {
+				return res
+			}
+		}
+	}
+	res := checkRes(<-results)
+	if res != nil {
+		return res
+	}
+
+	close(tasksChan)
+	close(done)
+	workersWg.Wait()
 	return nil
 }
-func worker(in <-chan Task, out chan<- error, quit chan struct{}) {
-	for {
-		var task Task
-		select {
-		case <-quit:
-			return
-		case task = <-in:
-		}
 
-		if task == nil {
-			return
-		}
+func worker(in <-chan Task, out chan<- error, done chan struct{}, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for task := range in {
 		err := task()
 
 		select {
-		case <-quit:
+		case <-done:
 			return
 		case out <- err:
-		}
-	}
-}
-
-func pushTasks(tasks []Task, tasksChan chan<- Task, quit chan struct{}) {
-	defer close(tasksChan)
-	for _, task := range tasks {
-		select {
-		case <-quit:
-			return
-		case tasksChan <- task:
 		}
 	}
 }
