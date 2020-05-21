@@ -67,27 +67,14 @@ func TestRun(t *testing.T) {
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
 	})
 
-	t.Run("my test", func(t *testing.T) {
+	t.Run("M < 0, run faild", func(t *testing.T) {
 		//t.Skip()
-		tasksCount := 4
-		tasks := make([]Task, 0, tasksCount)
-
-		//var runTasksCount int32
-
-		for i := 0; i < tasksCount; i++ {
-			//err := fmt.Errorf("error from task %d", i)
-			tasks = append(tasks, func() error {
-				time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
-				//atomic.AddInt32(&runTasksCount, 1)
-				return nil
-			})
-		}
+		tasks := make([]Task, 0)
 
 		workersCount := 2
-		maxErrorsCount := 23
+		maxErrorsCount := -1
 		result := Run(tasks, workersCount, maxErrorsCount)
 
-		require.Nil(t, result)
-		//require.LessOrEqual(t, runTasksCount, int32(workersCount+maxErrorsCount), "extra tasks were started")
+		require.Equal(t, ErrErrorsLimitExceeded, result)
 	})
 }
