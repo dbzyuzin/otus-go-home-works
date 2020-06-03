@@ -21,12 +21,8 @@ func Run(tasks []Task, n int, m int) error {
 	results := make(chan error)
 	done := make(chan struct{})
 
-	workersWg := &sync.WaitGroup{}
-
-	workersWg.Add(n)
-	for i := 0; i < n; i++ {
-		go worker(tasksChan, results, done, workersWg)
-	}
+	wg := StartWorkers(n, tasksChan, results, done)
+	defer wg.Wait()
 
 	errCount := 0
 	checkRes := func(res error) error {
@@ -35,7 +31,6 @@ func Run(tasks []Task, n int, m int) error {
 		}
 		if errCount >= m {
 			close(done)
-			workersWg.Wait()
 			return ErrErrorsLimitExceeded
 		}
 		return nil
@@ -52,15 +47,33 @@ func Run(tasks []Task, n int, m int) error {
 			}
 		}
 	}
-	res := checkRes(<-results)
-	if res != nil {
-		return res
-	}
 
 	close(tasksChan)
+	for res := range results {
+		res = checkRes(res)
+		if res != nil {
+			return res
+		}
+	}
+
 	close(done)
-	workersWg.Wait()
 	return nil
+}
+
+func StartWorkers(n int, tasksChan chan Task, results chan error, done chan struct{}) *sync.WaitGroup {
+	workersWg := &sync.WaitGroup{}
+
+	workersWg.Add(n)
+	for i := 0; i < n; i++ {
+		go worker(tasksChan, results, done, workersWg)
+	}
+
+	go func() {
+		workersWg.Wait()
+		close(results)
+	}()
+
+	return workersWg
 }
 
 func worker(in <-chan Task, out chan<- error, done chan struct{}, wg *sync.WaitGroup) {
