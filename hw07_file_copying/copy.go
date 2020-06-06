@@ -4,8 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
-	//
-	//"github.com/mitchellh/ioprogress"
+
 	"github.com/cheggaaa/pb/v3"
 )
 
