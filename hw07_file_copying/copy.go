@@ -29,23 +29,9 @@ func Copy(fromPath string, toPath string, offset, limit int64) (err error) {
 		}
 	}()
 
-	stat, err := in.Stat()
+	inr, err := getReaderWithOffset(in, offset)
 	if err != nil {
 		return err
-	}
-	if offset > stat.Size() {
-		return ErrOffsetExceedsFileSize
-	}
-	if offset > 0 {
-		offset, err = in.Seek(offset, io.SeekStart)
-		if err != nil {
-			return err
-		}
-	}
-
-	inr := &ioprogress.Reader{
-		Reader: in,
-		Size:   stat.Size() - offset,
 	}
 
 	if limit > 0 {
@@ -62,6 +48,29 @@ func Copy(fromPath string, toPath string, offset, limit int64) (err error) {
 		return err
 	}
 	return nil
+}
+
+func getReaderWithOffset(file *os.File, offset int64) (io.Reader, error) {
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if offset > stat.Size() {
+		return nil, ErrOffsetExceedsFileSize
+	}
+	if offset > 0 {
+		_, err = file.Seek(offset, io.SeekStart)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	inr := &ioprogress.Reader{
+		Reader: file,
+		Size:   stat.Size() - offset,
+	}
+
+	return inr, nil
 }
 
 func openFiles(src, dst string) (in, out *os.File, err error, closer func() error) {
