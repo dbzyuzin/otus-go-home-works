@@ -3,6 +3,6 @@ module github.com/dbzyuzin/otus-go-home-works/hw07_file_copying
 go 1.14
 
 require (
-	github.com/golangci/golangci-lint v1.27.0 // indirect
-	github.com/mitchellh/ioprogress v0.0.0-20180201004757-6a23b12fa88e
+	github.com/cheggaaa/pb/v3 v3.0.4
+	github.com/mattn/go-colorable v0.1.4 // indirect
 )

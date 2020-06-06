@@ -4,8 +4,9 @@ import (
 	"errors"
 	"io"
 	"os"
-
-	"github.com/mitchellh/ioprogress"
+	//
+	//"github.com/mitchellh/ioprogress"
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -14,107 +15,87 @@ var (
 )
 
 func Copy(fromPath string, toPath string, offset, limit int64) (err error) {
-	err = checkPaths(fromPath, toPath)
+	err = Validate(fromPath, toPath, offset)
 	if err != nil {
 		return err
 	}
 
-	in, out, closeF, err := openFiles(fromPath, toPath)
+	in, err := os.Open(fromPath)
+	if err != nil {
+		return err
+	}
+	out, err := os.Create(toPath)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		cerr := closeF()
-		if cerr != nil {
-			err = cerr
+		inerr := in.Close()
+		outerr := out.Close()
+		if inerr != nil {
+			err = inerr
+		}
+		if outerr != nil {
+			err = outerr
 		}
 	}()
 
-	inr, err := getReaderWithOffset(in, offset)
-	if err != nil {
-		return err
+	if offset > 0 {
+		_, err = in.Seek(offset, io.SeekStart)
+		if err != nil {
+			return err
+		}
 	}
+	var inr io.Reader = in
 
 	if limit > 0 {
-		_, err = io.CopyN(out, inr, limit)
-	} else {
-		_, err = io.Copy(out, inr)
-	}
-	if err != nil && err != io.EOF {
-		return err
+		inr = io.LimitReader(in, limit)
 	}
 
-	err = out.Sync()
+	bar := getPBar(in, offset, limit)
+	defer bar.Finish()
+	inr = bar.NewProxyReader(inr)
+
+	_, err = io.Copy(out, inr)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func getReaderWithOffset(file *os.File, offset int64) (io.Reader, error) {
-	stat, err := file.Stat()
-	if err != nil {
-		return nil, err
-	}
-	if offset > stat.Size() {
-		return nil, ErrOffsetExceedsFileSize
-	}
-	if offset > 0 {
-		_, err = file.Seek(offset, io.SeekStart)
-		if err != nil {
-			return nil, err
-		}
+func getPBar(in *os.File, offset, limit int64) *pb.ProgressBar {
+	inStats, _ := in.Stat()
+	inSize := inStats.Size()
+	needCopy := inSize - offset
+	if needCopy > limit {
+		needCopy = limit
 	}
 
-	inr := &ioprogress.Reader{
-		Reader: file,
-		Size:   stat.Size() - offset,
-	}
+	bar := pb.Simple.Start64(needCopy)
 
-	return inr, nil
+	return bar
 }
 
-func openFiles(src, dst string) (in, out *os.File, closer func() error, err error) {
-	in, err = os.Open(src)
+func Validate(fromPath string, toPath string, offset int64) error {
+	stats, err := os.Stat(fromPath)
 	if err != nil {
-		return
+		return err
 	}
-	out, err = os.Create(dst)
-	if err != nil {
-		return
+	if stats.Size() < offset {
+		return ErrOffsetExceedsFileSize
 	}
-
-	return in, out, func() error {
-		cerr := in.Close()
-		if cerr != nil {
-			return cerr
-		}
-		cerr = out.Close()
-		if cerr != nil {
-			return cerr
-		}
-		return nil
-	}, nil
-}
-
-func checkPaths(src, dst string) (err error) {
-	sstat, err := os.Stat(src)
-	if err != nil {
-		return
-	}
-	if !sstat.Mode().IsRegular() {
+	if !stats.Mode().IsRegular() {
 		return ErrUnsupportedFile
 	}
-	dstat, err := os.Stat(dst)
+	stats, err = os.Stat(toPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return
+			return err
 		}
 	} else {
-		if !dstat.Mode().IsRegular() {
+		if !stats.Mode().IsRegular() {
 			return ErrUnsupportedFile
 		}
 	}
-
 	return nil
 }
