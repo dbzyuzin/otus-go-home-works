@@ -2,9 +2,10 @@ package main
 
 import (
 	"errors"
-	"github.com/mitchellh/ioprogress"
 	"io"
 	"os"
+
+	"github.com/mitchellh/ioprogress"
 )
 
 var (
@@ -18,7 +19,7 @@ func Copy(fromPath string, toPath string, offset, limit int64) (err error) {
 		return err
 	}
 
-	in, out, err, closeF := openFiles(fromPath, toPath)
+	in, out, closeF, err := openFiles(fromPath, toPath)
 	if err != nil {
 		return err
 	}
@@ -73,7 +74,7 @@ func getReaderWithOffset(file *os.File, offset int64) (io.Reader, error) {
 	return inr, nil
 }
 
-func openFiles(src, dst string) (in, out *os.File, err error, closer func() error) {
+func openFiles(src, dst string) (in, out *os.File, closer func() error, err error) {
 	in, err = os.Open(src)
 	if err != nil {
 		return
@@ -83,7 +84,7 @@ func openFiles(src, dst string) (in, out *os.File, err error, closer func() erro
 		return
 	}
 
-	return in, out, nil, func() error {
+	return in, out, func() error {
 		cerr := in.Close()
 		if cerr != nil {
 			return cerr
@@ -93,7 +94,7 @@ func openFiles(src, dst string) (in, out *os.File, err error, closer func() erro
 			return cerr
 		}
 		return nil
-	}
+	}, nil
 }
 
 func checkPaths(src, dst string) (err error) {
