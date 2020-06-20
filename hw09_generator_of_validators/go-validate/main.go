@@ -1,25 +1,28 @@
 package main
 
 import (
+	"fmt"
+	"github.com/fixme_my_friend/hw09_generator_of_validators/go-validate/generation"
 	"github.com/fixme_my_friend/hw09_generator_of_validators/go-validate/inspections"
+	"io/ioutil"
+	"log"
+	"strings"
 )
 
 func main() {
-	_ = inspections.GetStructureMetadata("models/models.go")
+	path := "models/models.go"
+	res := inspections.GetStructureMetadata(path)
+	s, err := generation.GenerateValidationCode(res)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	//fmt.Println()
-	//for _, structure := range needValidateStructures {
-	//	//fmt.Printf("func (s *%s) Validate() ([]ValidationError, error) {\n", structure.spec.Name)
-	//	for _, field := range structure.s.Fields.List {
-	//		fmt.Printf("names %v", field.Names)
-	//		switch val := field.Type.(type) {
-	//		case *ast.Ident:
-	//			fmt.Printf("ident %v\n", val.Name)
-	//		case *ast.ArrayType:
-	//			fmt.Printf("array %v\n", val.Elt.(*ast.Ident).Name)
-	//		}
-	//		println()
-	//		//fmt.Printf("%v\n", field.Type)
-	//	}
-	//}
+	path = strings.TrimSuffix(path, ".go")
+	err = ioutil.WriteFile(path+"_validate.go", []byte(s), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(s)
+
 }

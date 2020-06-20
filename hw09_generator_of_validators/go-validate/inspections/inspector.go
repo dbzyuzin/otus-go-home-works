@@ -1,7 +1,6 @@
 package inspections
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -39,10 +38,10 @@ func GetStructureMetadata(path string) []StructMetadata {
 		res = append(res, s)
 	}
 
-	println()
-	for _, re := range res {
-		fmt.Printf("%v\n\n", re)
-	}
+	//println()
+	//for _, re := range res {
+	//	fmt.Printf("%v\n\n", re)
+	//}
 
 	return res
 }
