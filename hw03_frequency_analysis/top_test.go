@@ -2,12 +2,15 @@ package hw03_frequency_analysis //nolint:golint
 
 import (
 	"testing"
+	"unicode"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 )
 
 // Change to true if needed
-var taskWithAsteriskIsCompleted = false
+var taskWithAsteriskIsCompleted = true
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -56,5 +59,24 @@ func TestTop10(t *testing.T) {
 			expected := []string{"он", "и", "а", "что", "ты", "не", "если", "-", "то", "Кристофер"}
 			assert.ElementsMatch(t, expected, Top10(text))
 		}
+	})
+
+	t.Run("no words and any spaces string", func(t *testing.T) {
+		require.Len(t, Top10("   "), 0)
+	})
+
+	t.Run("any simbols that not words", func(t *testing.T) {
+		require.Len(t, Top10(" ! ,\"  "), 0)
+	})
+
+	t.Run("all words is lower", func(t *testing.T) {
+		for _, word := range Top10(" Cлово сЛово2 слоВо3 словО4") {
+			for _, char := range []rune(word) {
+				if unicode.IsLetter(char) {
+					require.True(t, unicode.IsLower(char), "simbols is not lower")
+				}
+			}
+		}
+
 	})
 }
