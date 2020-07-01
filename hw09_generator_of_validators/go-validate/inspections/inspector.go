@@ -32,16 +32,10 @@ func GetStructureMetadata(path string) []StructMetadata {
 						Tag:  field.Tag.Value,
 					})
 				}
-
 			}
 		}
 		res = append(res, s)
 	}
-
-	//println()
-	//for _, re := range res {
-	//	fmt.Printf("%v\n\n", re)
-	//}
 
 	return res
 }

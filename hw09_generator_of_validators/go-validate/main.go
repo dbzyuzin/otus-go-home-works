@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/fixme_my_friend/hw09_generator_of_validators/go-validate/generation"
 	"github.com/fixme_my_friend/hw09_generator_of_validators/go-validate/inspections"
 	"io/ioutil"
@@ -18,11 +17,8 @@ func main() {
 	}
 
 	path = strings.TrimSuffix(path, ".go")
-	err = ioutil.WriteFile(path+"_validate.go", []byte(s), 0644)
+	err = ioutil.WriteFile(path+"_validation_generated.go", []byte(s), 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println(s)
-
 }
