@@ -31,11 +31,11 @@ func main() {
 	client := NewTelnetClient(net.JoinHostPort(host, port), timeout, os.Stdin, os.Stdout)
 	err := client.Connect()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 	defer func() {
 		if err = client.Close(); err != nil {
-			log.Fatal(err)
+			log.Fatalln(err)
 		}
 	}()
 
