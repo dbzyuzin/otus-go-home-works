@@ -3,9 +3,10 @@ package hw10_program_optimization //nolint:golint,stylecheck
 import (
 	"bufio"
 	"errors"
-	"github.com/buger/jsonparser"
 	"io"
 	"strings"
+
+	"github.com/buger/jsonparser"
 )
 
 type User struct {
