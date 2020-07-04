@@ -36,4 +36,17 @@ func TestGetDomainStat(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{}, result)
 	})
+
+	t.Run("empty domain", func(t *testing.T) {
+		result, err := GetDomainStat(bytes.NewBufferString(data), "")
+		require.Equal(t, ErrEmptyDomain, err)
+		require.Nil(t, result)
+	})
+
+	t.Run("no email field", func(t *testing.T) {
+		data := `{"Id":1,"Name":"Howard Mendoza","Username":"0Oliver","Phone":"6-866-899-36-79","Password":"InAQJvsq","Address":"Blackbird Place 25"}`
+		result, err := GetDomainStat(bytes.NewBufferString(data), "gov")
+		require.Equal(t, ErrDataCorrupted, err)
+		require.Nil(t, result)
+	})
 }

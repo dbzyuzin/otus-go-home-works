@@ -1,11 +1,10 @@
 package hw10_program_optimization //nolint:golint,stylecheck
 
 import (
-	"encoding/json"
-	"fmt"
+	"bufio"
+	"errors"
+	"github.com/buger/jsonparser"
 	"io"
-	"io/ioutil"
-	"regexp"
 	"strings"
 )
 
@@ -21,47 +20,31 @@ type User struct {
 
 type DomainStat map[string]int
 
+var (
+	ErrDataCorrupted = errors.New("data is corrupted")
+	ErrEmptyDomain   = errors.New("empty domain")
+)
+
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	u, err := getUsers(r)
-	if err != nil {
-		return nil, fmt.Errorf("get users error: %s", err)
-	}
-	return countDomains(u, domain)
-}
-
-type users [100_000]User
-
-func getUsers(r io.Reader) (result users, err error) {
-	content, err := ioutil.ReadAll(r)
-	if err != nil {
-		return
+	if domain == "" {
+		return nil, ErrEmptyDomain
 	}
 
-	lines := strings.Split(string(content), "\n")
-	for i, line := range lines {
-		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
-			return
-		}
-		result[i] = user
-	}
-	return
-}
-
-func countDomains(u users, domain string) (DomainStat, error) {
-	result := make(DomainStat)
-
-	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
+	stat := make(DomainStat)
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		email, err := jsonparser.GetString(scanner.Bytes(), "Email")
 		if err != nil {
-			return nil, err
+			return nil, ErrDataCorrupted
 		}
-
-		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
+		if email != "" && strings.HasSuffix(email, domain) {
+			eDomain := strings.SplitN(email, "@", 2)[1]
+			stat[strings.ToLower(eDomain)]++
 		}
 	}
-	return result, nil
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return stat, nil
 }
